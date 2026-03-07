@@ -25,7 +25,7 @@ export default defineConfig({
         return { js: '' };
     },
     onSuccess: async () => {
-        // Add shebang to bin files after build
+        // Add shebang to bin files and set executable permission (needed on Mac/Linux)
         const fs = await import('fs');
         const binFiles = ['dist/bin/hub.js', 'dist/bin/agent.js', 'dist/bin/spawn.js', 'dist/bin/start.js', 'dist/bin/analyze.js'];
         for (const file of binFiles) {
@@ -34,8 +34,9 @@ export default defineConfig({
                 if (!content.startsWith('#!/')) {
                     fs.writeFileSync(file, `#!/usr/bin/env node\n${content}`);
                 }
+                fs.chmodSync(file, 0o755);
             } catch {
-                // File might not exist yet
+                // File might not exist yet, or chmod not supported (Windows)
             }
         }
     },
