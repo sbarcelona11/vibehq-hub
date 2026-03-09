@@ -45,11 +45,11 @@ VibeHQ includes a **full web dashboard** that lets you manage all your AI agent 
 
 ### Desktop
 
-https://github.com/user-attachments/assets/0a09268a-b7c5-4482-bcdf-eb4f9d4b574a
+https://github.com/user-attachments/assets/6f0fe691-bef8-49f9-a0ce-a65b215d264f
 
 ### Mobile — Full Control From Your Phone
 
-https://github.com/user-attachments/assets/7e552b93-b4c2-4c07-9a20-34d9dccb0b8e
+https://github.com/user-attachments/assets/9d056e18-44ea-418a-8831-dafc5cb724b8
 
 ### What You Can Do
 
@@ -76,6 +76,55 @@ node dist/bin/web.js --port 8080 --hub-port 4001
 ```
 
 The server prints your LAN IP on startup — open that URL on your phone and you're in.
+
+### Remote Access (Outside Your LAN)
+
+By default, the web platform is only accessible on your local network. To access it from anywhere (coffee shop, travel, another office), you'll need to expose the server securely.
+
+> ⚠️ **Security Warning:** VibeHQ gives full terminal access to your machine — anyone who can reach the web UI can start agents, run commands, and read output. **Never expose it to the internet without authentication.**
+
+**Always enable auth before exposing remotely:**
+```bash
+VIBEHQ_AUTH=admin:your-strong-password vibehq-web
+```
+
+#### Recommended Methods
+
+| Method | Difficulty | Best For |
+|--------|-----------|----------|
+| **[Tailscale](https://tailscale.com/)** | Easiest | Personal use — installs on PC + phone, creates a private VPN. No ports to open, no config. Free tier available. |
+| **[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)** | Easy | Sharing with others — gives you a public `*.cfargotunnel.com` URL behind Cloudflare's network. Free. |
+| **[ngrok](https://ngrok.com/)** | Easy | Quick testing — `ngrok http 3100` gives a temporary public URL. Free tier has limits. |
+| **SSH Tunnel** | Medium | If you have a VPS — `ssh -R 8080:localhost:3100 your-server`. No extra software needed. |
+| **Router Port Forwarding** | Hard | Not recommended — requires static IP or DDNS, opens your network directly to the internet. |
+
+#### Example: Tailscale (Recommended)
+
+1. Install [Tailscale](https://tailscale.com/download) on your PC and phone
+2. Sign in on both devices
+3. Start VibeHQ: `VIBEHQ_AUTH=admin:secret vibehq-web`
+4. On your phone, open `http://<tailscale-ip>:3100`
+5. Done — encrypted, no port forwarding, works from anywhere
+
+#### Example: Cloudflare Tunnel
+
+```bash
+# Install cloudflared and authenticate
+cloudflared tunnel login
+cloudflared tunnel create vibehq
+
+# Expose your local server
+cloudflared tunnel route dns vibehq agents.yourdomain.com
+cloudflared tunnel run --url http://localhost:3100 vibehq
+```
+
+#### Security Checklist
+
+- [ ] **Always set `VIBEHQ_AUTH`** — without it, anyone with the URL has full access
+- [ ] **Use HTTPS** — Tailscale and Cloudflare Tunnel handle this automatically; ngrok does too
+- [ ] **Don't use port forwarding** unless you understand the risks
+- [ ] **Use strong passwords** — the basic auth credentials travel with every request
+- [ ] **Consider who can see your agents' output** — terminals may contain API keys, secrets, or sensitive code
 
 ---
 
